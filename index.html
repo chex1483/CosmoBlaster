@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, touch-action=manipulation">
-  <title>✨ Cosmo Blaster XTR | Telegram Mini App</title>
+  <title>✨ Cosmo Blaster | Telegram Mini App</title>
   <style>
     * {
       margin: 0;
@@ -177,9 +177,9 @@
       backdrop-filter: blur(15px);
     }
     .shop-screen h2 {
-      font-size: 2rem;
+      font-size: 1.8rem;
       color: #FFD966;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
     .btn {
       background: linear-gradient(180deg, #FFD966 0%, #FFB800 100%);
@@ -210,6 +210,26 @@
       align-items: center;
       color: white;
       box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    }
+    .shop-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+    .shop-tab {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #aaa;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: 0.2s;
+    }
+    .shop-tab.active {
+      background: rgba(255,215,0,0.15);
+      border-color: #FFD966;
+      color: #FFD966;
     }
     .close-btn {
       background: transparent;
@@ -271,13 +291,50 @@
     .shop-btn-hud:active {
       transform: scale(0.95);
     }
+    .wheel-screen {
+      background: rgba(5, 5, 16, 0.95);
+      backdrop-filter: blur(15px);
+    }
+    .wheel-fake-winners {
+      background: rgba(255,215,0,0.1);
+      border: 1px solid rgba(255,215,0,0.2);
+      border-radius: 15px;
+      padding: 8px 15px;
+      margin-bottom: 15px;
+      font-size: 0.75rem;
+      color: #FFD966;
+      width: 90%;
+      overflow: hidden;
+      height: 20px;
+      position: relative;
+    }
+    .wheel-fake-text {
+      position: absolute;
+      white-space: nowrap;
+      animation: scrollText 8s linear infinite;
+    }
+    @keyframes scrollText {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    .wheel-disclaimer {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      font-size: 0.45rem;
+      color: #111;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 25;
+      max-width: 180px;
+      line-height: 1.1;
+    }
   </style>
 </head>
 <body>
   <div class="game-container" id="gameContainer">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Загрузочный экран -->
     <div class="screen loading-screen" id="loadingScreen">
       <div class="loading-spinner">🚀</div>
       <h2 style="color:#FFD966;">COSMO BLASTER</h2>
@@ -285,7 +342,6 @@
       <div class="loading-text" id="loadingText">Loading...</div>
     </div>
 
-    <!-- Главное меню -->
     <div class="screen menu-screen" id="menuScreen" style="display:none;">
       <h1>COSMO BLASTER</h1>
       <p class="subtitle" id="menuSubtitle">Arcade space shooter</p>
@@ -296,49 +352,61 @@
       </div>
       <button class="menu-btn" id="playBtn">🎮 PLAY</button>
       <button class="menu-btn secondary" id="menuShopBtn">🛍️ SHOP</button>
-      <p style="margin-top:18px; color:#666; font-size:0.8rem;" id="menuBalance">💰 Balance: <span id="menuXtr">0</span> XTR</p>
+      <button class="menu-btn secondary" id="menuWheelBtn">🎡 WHEEL</button>
+      <p style="margin-top:18px; color:#666; font-size:0.8rem;" id="menuBalance">💰 Balance: <span id="menuCredits">0</span> CREDITS</p>
     </div>
 
-    <!-- HUD -->
     <div class="hud" id="hud" style="display:none;">
       <div style="display:flex; gap:6px; flex-wrap:wrap;">
-        <div class="hud-panel">⭐ <span id="starCounter">0</span></div>
+        <div class="hud-panel">💰 <span id="creditsCounter">0</span></div>
         <div class="hud-panel wave-hud">🌊 <span id="waveCounter">1</span></div>
         <div class="hud-panel kills-hud">💀 <span id="killsCounter">0</span></div>
       </div>
-      <button class="shop-btn-hud" id="openShopBtn">🛍️ XTR</button>
+      <button class="shop-btn-hud" id="openShopBtn">🛍️</button>
     </div>
 
-    <!-- Game Over -->
     <div class="screen game-over-screen" id="gameOverScreen" style="display:none;">
       <h2 id="gameOverTitle">💥 BOOM!</h2>
       <p style="font-size:1.1rem; margin:6px 0;" id="gameOverWave">Wave: <span id="finalWave">1</span></p>
       <p style="font-size:1.1rem;" id="gameOverKills">Kills: <span id="finalKills">0</span></p>
-      <p style="font-size:1rem; color:#FFD966;">XTR: <span id="finalStars">0</span> ⭐</p>
+      <p style="font-size:1rem; color:#FFD966;">CREDITS: <span id="finalCredits">0</span> 💰</p>
       <button class="btn" id="restartBtn">🚀 PLAY AGAIN</button>
       <button class="btn" style="background:transparent; border:1px solid white; color:white;" id="toMenuBtn">🏠 MENU</button>
     </div>
 
-    <!-- Магазин -->
     <div class="screen shop-screen" id="shopScreen" style="display:none;">
-      <h2 id="shopTitle">✨ XTR SHOP ✨</h2>
-      <div class="shop-item">
-        <span id="itemShield">🛡️ Shield (1 game)</span>
-        <button class="btn" style="padding:8px 16px; font-size:0.9rem;" id="buyShieldBtn">50 XTR</button>
+      <h2 id="shopTitle">✨ SHOP ✨</h2>
+      <div class="shop-tabs">
+        <button class="shop-tab active" data-tab="items" id="tabItems">🛡️ Items</button>
+        <button class="shop-tab" data-tab="skins" id="tabSkins">🎨 Skins</button>
       </div>
-      <div class="shop-item">
-        <span id="itemDouble">⚡ Double Shot</span>
-        <button class="btn" style="padding:8px 16px; font-size:0.9rem;" id="buyDoubleShotBtn">100 XTR</button>
+      <div id="shopItems">
+        <div class="shop-item"><span id="itemShield">🛡️ Shield (1 game)</span><button class="btn" style="padding:8px 16px; font-size:0.9rem;" id="buyShieldBtn">50 💰</button></div>
+        <div class="shop-item"><span id="itemDouble">⚡ Double Shot</span><button class="btn" style="padding:8px 16px; font-size:0.9rem;" id="buyDoubleShotBtn">100 💰</button></div>
+        <div class="shop-item"><span id="itemLife">❤️ Extra Life</span><button class="btn" style="padding:8px 16px; font-size:0.9rem;" id="buyExtraLifeBtn">75 💰</button></div>
+        <div class="shop-item"><span id="itemDonate">💎 500 CREDITS</span><button class="btn" style="padding:8px 16px; font-size:0.9rem; background:#FF2A75; color:white;" id="donateBtn">💳 BUY</button></div>
       </div>
-      <div class="shop-item">
-        <span id="itemLife">❤️ Extra Life</span>
-        <button class="btn" style="padding:8px 16px; font-size:0.9rem;" id="buyExtraLifeBtn">75 XTR</button>
-      </div>
-      <div class="shop-item">
-        <span id="itemDonate">💎 500 XTR</span>
-        <button class="btn" style="padding:8px 16px; font-size:0.9rem; background:#FF2A75; color:white;" id="donateStarsBtn">💳 BUY</button>
+      <div id="shopSkins" style="display:none;">
+        <div class="shop-item"><span>✈️ Standard</span><span style="color:#0f0;">Equipped</span></div>
+        <div class="shop-item"><span>🛩️ Fighter</span><button class="btn skin-buy" style="padding:8px 16px; font-size:0.9rem;" data-skin="fighter" data-price="200">200 💰</button></div>
+        <div class="shop-item"><span>🚀 Rocket</span><button class="btn skin-buy" style="padding:8px 16px; font-size:0.9rem;" data-skin="rocket" data-price="500">500 💰</button></div>
+        <div class="shop-item"><span>🛸 UFO</span><button class="btn skin-buy" style="padding:8px 16px; font-size:0.9rem;" data-skin="ufo" data-price="1000">1000 💰</button></div>
+        <div class="shop-item"><span>👾 Cyber</span><button class="btn skin-buy" style="padding:8px 16px; font-size:0.9rem;" data-skin="cyber" data-price="2000">2000 💰</button></div>
       </div>
       <button class="close-btn" id="closeShopBtn">✕ CLOSE</button>
+    </div>
+
+    <div class="screen wheel-screen" id="wheelScreen" style="display:none;">
+      <h2 style="color:#FFD966; margin-bottom:5px;" id="wheelTitle">🎡 WHEEL OF FORTUNE</h2>
+      <div class="wheel-fake-winners">
+        <div class="wheel-fake-text" id="wheelFakeText"></div>
+      </div>
+      <canvas id="wheelCanvas" width="280" height="280" style="margin:10px 0;"></canvas>
+      <p style="font-size:0.9rem; margin:8px 0;" id="wheelCost">🎫 50 CREDITS per spin</p>
+      <p style="font-size:0.75rem; color:#4f4;" id="wheelFree">🆓 1 free spin available!</p>
+      <button class="btn" id="spinWheelBtn">🎰 SPIN</button>
+      <button class="close-btn" id="closeWheelBtn">✕ CLOSE</button>
+      <div class="wheel-disclaimer" id="wheelDisclaimer">*Virtual game currency. Prizes are in-game items only. Free Stars and Laptop are fictional game mechanics and do not represent real rewards.</div>
     </div>
   </div>
 
@@ -346,14 +414,10 @@
     (function() {
       const canvas = document.getElementById('gameCanvas');
       const ctx = canvas.getContext('2d');
-
-      // ============ ЗВУКОВОЙ ДВИЖОК (Web Audio API) ============
       let audioCtx = null;
 
       function initAudio() {
-        if (!audioCtx) {
-          audioCtx = new(window.AudioContext || window.webkitAudioContext)();
-        }
+        if (!audioCtx) audioCtx = new(window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
       }
 
@@ -395,18 +459,26 @@
       function sfxPlayerDeath() { playSound(25, 'sawtooth', 0.8, 0.2);
         playSound(18, 'triangle', 0.9, 0.22); }
 
-      // ============ ПЕРЕВОДЫ ============
+      function sfxWheelTick() { playSound(600, 'square', 0.04, 0.03, 300); }
+
+      function sfxWheelWin() { playSound(523, 'triangle', 0.1, 0.06);
+        setTimeout(() => playSound(659, 'triangle', 0.1, 0.06), 70);
+        setTimeout(() => playSound(784, 'triangle', 0.15, 0.1), 140); }
+
       const translations = {
         en: {
           menuSubtitle: 'Arcade space shooter',
           playBtn: '🎮 PLAY',
           menuShopBtn: '🛍️ SHOP',
+          menuWheelBtn: '🎡 WHEEL',
           menuBalance: '💰 Balance: ',
-          shopTitle: '✨ XTR SHOP ✨',
+          shopTitle: '✨ SHOP ✨',
+          tabItems: '🛡️ Items',
+          tabSkins: '🎨 Skins',
           itemShield: '🛡️ Shield (1 game)',
           itemDouble: '⚡ Double Shot',
           itemLife: '❤️ Extra Life',
-          itemDonate: '💎 500 XTR',
+          itemDonate: '💎 500 CREDITS',
           donateBtn: '💳 BUY',
           closeBtn: '✕ CLOSE',
           gameOverTitle: '💥 BOOM!',
@@ -414,30 +486,46 @@
           gameOverKills: 'Kills: ',
           restartBtn: '🚀 PLAY AGAIN',
           toMenuBtn: '🏠 MENU',
-          loadingText: ['Loading graphics...', 'Setting up physics...', 'Connecting XTR...', 'Ready!'],
-          wavePhrases: [
-            'NICE SHOT! 🎯', 'PROFESSIONAL! 👑', 'GODLIKE! ⚡',
-            'IMPRESSIVE! 🌟', 'DEVASTATING! 💥', 'UNSTOPPABLE! 🔥',
-            'LEGENDARY! 🏆', 'MASSACRE! 💀', 'FLAWLESS! ✨', 'COSMIC POWER! 🌌'
+          loadingText: ['Loading graphics...', 'Setting up physics...', 'Connecting...', 'Ready!'],
+          wavePhrases: ['NICE SHOT! 🎯', 'PROFESSIONAL! 👑', 'GODLIKE! ⚡', 'IMPRESSIVE! 🌟',
+            'DEVASTATING! 💥', 'UNSTOPPABLE! 🔥', 'LEGENDARY! 🏆', 'MASSACRE! 💀', 'FLAWLESS! ✨',
+            'COSMIC POWER! 🌌'
           ],
           waveLabel: 'WAVE ',
-          alertNoXTR: 'Not enough XTR!',
+          alertNoCredits: 'Not enough CREDITS!',
           alertShield: '🛡️ Shield activated!',
           alertDouble: '⚡ Double shot activated!',
           alertLife: '❤️ +1 life!',
-          alertDonate: '💎 500 XTR donated (demo)',
-          bossLabel: '👹 '
+          alertDonate: '💎 500 CREDITS (demo)',
+          alertSkinBought: '✅ Skin purchased!',
+          alertSkinEquipped: '✅ Skin equipped!',
+          bossLabel: '👹 ',
+          wheelTitle: '🎡 WHEEL OF FORTUNE',
+          wheelCost: '🎫 50 CREDITS per spin',
+          wheelFree: '🆓 1 free spin available!',
+          wheelFreeUsed: '❌ Free spin used today',
+          wheelWinCredits: '🎉 You won {n} CREDITS!',
+          wheelWinMeme: '😂 LOL! {meme}',
+          wheelFakePrefix: 'won FREE STARS',
+          wheelFakeSuffix: 'ago',
+          wheelMinAgo: 'minutes',
+          wheelDisclaimer: '*Virtual game currency. Prizes are in-game items only. Free Stars and Laptop are fictional game mechanics and do not represent real rewards.',
+          equipped: 'Equipped',
+          skinNames: { fighter: '🛩️ Fighter', rocket: '🚀 Rocket', ufo: '🛸 UFO', cyber: '👾 Cyber' }
         },
         ru: {
           menuSubtitle: 'Аркадный космический шутер',
           playBtn: '🎮 ИГРАТЬ',
           menuShopBtn: '🛍️ МАГАЗИН',
+          menuWheelBtn: '🎡 КОЛЕСО',
           menuBalance: '💰 Баланс: ',
-          shopTitle: '✨ МАГАЗИН XTR ✨',
+          shopTitle: '✨ МАГАЗИН ✨',
+          tabItems: '🛡️ Предметы',
+          tabSkins: '🎨 Скины',
           itemShield: '🛡️ Щит (1 игра)',
           itemDouble: '⚡ Двойной выстрел',
           itemLife: '❤️ Доп. жизнь',
-          itemDonate: '💎 500 XTR',
+          itemDonate: '💎 500 КРЕДИТОВ',
           donateBtn: '💳 КУПИТЬ',
           closeBtn: '✕ ЗАКРЫТЬ',
           gameOverTitle: '💥 ВЗРЫВ!',
@@ -445,30 +533,46 @@
           gameOverKills: 'Убито: ',
           restartBtn: '🚀 ИГРАТЬ СНОВА',
           toMenuBtn: '🏠 В МЕНЮ',
-          loadingText: ['Загрузка графики...', 'Настройка физики...', 'Подключение XTR...', 'Готово!'],
-          wavePhrases: [
-            'ОТЛИЧНЫЙ ВЫСТРЕЛ! 🎯', 'ПРОФЕССИОНАЛ! 👑', 'БОГОПОДОБНО! ⚡',
-            'ВПЕЧАТЛЯЕТ! 🌟', 'РАЗРУШИТЕЛЬНО! 💥', 'НЕОСТАНОВИМ! 🔥',
-            'ЛЕГЕНДАРНО! 🏆', 'УБИЙСТВЕННО! 💀', 'БЕЗУПРЕЧНО! ✨', 'КОСМИЧЕСКАЯ МОЩЬ! 🌌'
+          loadingText: ['Загрузка графики...', 'Настройка физики...', 'Подключение...', 'Готово!'],
+          wavePhrases: ['ОТЛИЧНЫЙ ВЫСТРЕЛ! 🎯', 'ПРОФЕССИОНАЛ! 👑', 'БОГОПОДОБНО! ⚡', 'ВПЕЧАТЛЯЕТ! 🌟',
+            'РАЗРУШИТЕЛЬНО! 💥', 'НЕОСТАНОВИМ! 🔥', 'ЛЕГЕНДАРНО! 🏆', 'УБИЙСТВЕННО! 💀', 'БЕЗУПРЕЧНО! ✨',
+            'КОСМИЧЕСКАЯ МОЩЬ! 🌌'
           ],
           waveLabel: 'ВОЛНА ',
-          alertNoXTR: 'Недостаточно XTR!',
+          alertNoCredits: 'Недостаточно КРЕДИТОВ!',
           alertShield: '🛡️ Щит активирован!',
           alertDouble: '⚡ Двойной выстрел активен!',
           alertLife: '❤️ +1 жизнь!',
-          alertDonate: '💎 500 XTR зачислено (демо)',
-          bossLabel: '👹 '
+          alertDonate: '💎 500 КРЕДИТОВ (демо)',
+          alertSkinBought: '✅ Скин куплен!',
+          alertSkinEquipped: '✅ Скин надет!',
+          bossLabel: '👹 ',
+          wheelTitle: '🎡 КОЛЕСО ФОРТУНЫ',
+          wheelCost: '🎫 50 КРЕДИТОВ за прокрутку',
+          wheelFree: '🆓 1 бесплатная прокрутка!',
+          wheelFreeUsed: '❌ Бесплатная прокрутка использована',
+          wheelWinCredits: '🎉 Вы выиграли {n} КРЕДИТОВ!',
+          wheelWinMeme: '😂 ЛОЛ! {meme}',
+          wheelFakePrefix: 'выиграл БЕСПЛАТНЫЕ ЗВЁЗДЫ',
+          wheelFakeSuffix: 'назад',
+          wheelMinAgo: 'минут',
+          wheelDisclaimer: '*Виртуальная игровая валюта. Призы — только внутриигровые предметы. Бесплатные Звёзды и Ноутбук — вымышленная игровая механика, не являются реальными наградами.',
+          equipped: 'Надето',
+                    skinNames: { fighter: '🛩️ Истребитель', rocket: '🚀 Ракета', ufo: '🛸 НЛО', cyber: '👾 Кибер' }
         },
         zh: {
           menuSubtitle: '街机太空射击',
           playBtn: '🎮 开始',
           menuShopBtn: '🛍️ 商店',
+          menuWheelBtn: '🎡 转盘',
           menuBalance: '💰 余额: ',
-          shopTitle: '✨ XTR 商店 ✨',
+          shopTitle: '✨ 商店 ✨',
+          tabItems: '🛡️ 道具',
+          tabSkins: '🎨 皮肤',
           itemShield: '🛡️ 护盾 (1局)',
           itemDouble: '⚡ 双倍射击',
           itemLife: '❤️ 额外生命',
-          itemDonate: '💎 500 XTR',
+          itemDonate: '💎 500 积分',
           donateBtn: '💳 购买',
           closeBtn: '✕ 关闭',
           gameOverTitle: '💥 爆炸!',
@@ -476,41 +580,56 @@
           gameOverKills: '击杀: ',
           restartBtn: '🚀 再来一局',
           toMenuBtn: '🏠 菜单',
-          loadingText: ['加载图形...', '设置物理...', '连接XTR...', '准备!'],
-          wavePhrases: [
-            '好枪法! 🎯', '专业! 👑', '如神! ⚡',
-            '印象深刻! 🌟', '毁灭性! 💥', '势不可挡! 🔥',
-            '传奇! 🏆', '屠杀! 💀', '完美! ✨', '宇宙力量! 🌌'
+          loadingText: ['加载图形...', '设置物理...', '连接中...', '准备!'],
+          wavePhrases: ['好枪法! 🎯', '专业! 👑', '如神! ⚡', '印象深刻! 🌟', '毁灭性! 💥', '势不可挡! 🔥', '传奇! 🏆',
+            '屠杀! 💀', '完美! ✨', '宇宙力量! 🌌'
           ],
           waveLabel: '波次 ',
-          alertNoXTR: 'XTR不足!',
+          alertNoCredits: '积分不足!',
           alertShield: '🛡️ 护盾已激活!',
           alertDouble: '⚡ 双倍射击已激活!',
           alertLife: '❤️ +1 生命!',
-          alertDonate: '💎 500 XTR 已捐赠 (演示)',
-          bossLabel: '👹 '
+          alertDonate: '💎 500 积分 (演示)',
+          alertSkinBought: '✅ 皮肤已购买!',
+          alertSkinEquipped: '✅ 皮肤已装备!',
+          bossLabel: '👹 ',
+          wheelTitle: '🎡 幸运大转盘',
+          wheelCost: '🎫 每次50积分',
+          wheelFree: '🆓 1次免费旋转!',
+          wheelFreeUsed: '❌ 今日免费已用',
+          wheelWinCredits: '🎉 你赢了 {n} 积分!',
+          wheelWinMeme: '😂 哈哈! {meme}',
+          wheelFakePrefix: '赢得了免费星星',
+          wheelFakeSuffix: '前',
+          wheelMinAgo: '分钟',
+          wheelDisclaimer: '*虚拟游戏货币。奖品仅为游戏内物品。免费星星和笔记本电脑是虚构的游戏机制，不代表真实奖励。',
+          equipped: '已装备',
+          skinNames: { fighter: '🛩️ 战斗机', rocket: '🚀 火箭', ufo: '🛸 飞碟', cyber: '👾 赛博' }
         }
       };
 
       let currentLang = 'en';
 
-      function t(key) {
-        return translations[currentLang][key] || translations['en'][key] || key;
-      }
+      function t(key) { return translations[currentLang] && translations[currentLang][key] !== undefined ?
+          translations[currentLang][key] : translations['en'][key] || key; }
 
       function applyTranslations() {
         document.getElementById('menuSubtitle').textContent = t('menuSubtitle');
         document.getElementById('playBtn').textContent = t('playBtn');
         document.getElementById('menuShopBtn').textContent = t('menuShopBtn');
+        document.getElementById('menuWheelBtn').textContent = t('menuWheelBtn');
         document.getElementById('menuBalance').innerHTML = t('menuBalance') +
-          '<span id="menuXtr">' + xtr + '</span> XTR';
+          '<span id="menuCredits">' + credits + '</span> CREDITS';
         document.getElementById('shopTitle').textContent = t('shopTitle');
+        document.getElementById('tabItems').textContent = t('tabItems');
+        document.getElementById('tabSkins').textContent = t('tabSkins');
         document.getElementById('itemShield').textContent = t('itemShield');
         document.getElementById('itemDouble').textContent = t('itemDouble');
         document.getElementById('itemLife').textContent = t('itemLife');
         document.getElementById('itemDonate').textContent = t('itemDonate');
-        document.getElementById('donateStarsBtn').textContent = t('donateBtn');
+        document.getElementById('donateBtn').textContent = t('donateBtn');
         document.getElementById('closeShopBtn').textContent = t('closeBtn');
+        document.getElementById('closeWheelBtn').textContent = t('closeBtn');
         document.getElementById('gameOverTitle').textContent = t('gameOverTitle');
         document.getElementById('gameOverWave').innerHTML = t('gameOverWave') +
           '<span id="finalWave">1</span>';
@@ -518,6 +637,11 @@
           '<span id="finalKills">0</span>';
         document.getElementById('restartBtn').textContent = t('restartBtn');
         document.getElementById('toMenuBtn').textContent = t('toMenuBtn');
+        document.getElementById('wheelTitle').textContent = t('wheelTitle');
+        document.getElementById('wheelCost').textContent = t('wheelCost');
+        document.getElementById('wheelDisclaimer').textContent = t('wheelDisclaimer');
+        updateWheelFreeLabel();
+        updateSkinButtons();
         updateHUD();
       }
 
@@ -528,19 +652,19 @@
         applyTranslations();
       }
 
-      // ============ ЭЛЕМЕНТЫ ============
       const loadingScreen = document.getElementById('loadingScreen');
       const menuScreen = document.getElementById('menuScreen');
       const hud = document.getElementById('hud');
       const gameOverScreen = document.getElementById('gameOverScreen');
       const shopScreen = document.getElementById('shopScreen');
-      const starCounterSpan = document.getElementById('starCounter');
+      const wheelScreen = document.getElementById('wheelScreen');
+      const creditsCounterSpan = document.getElementById('creditsCounter');
       const waveCounterSpan = document.getElementById('waveCounter');
       const killsCounterSpan = document.getElementById('killsCounter');
-      const finalStarsSpan = document.getElementById('finalStars');
+      const finalCreditsSpan = document.getElementById('finalCredits');
       const finalWaveSpan = document.getElementById('finalWave');
       const finalKillsSpan = document.getElementById('finalKills');
-      const menuXtrSpan = document.getElementById('menuXtr');
+      const menuCreditsSpan = document.getElementById('menuCredits');
 
       let W, H;
       let gameState = 'loading';
@@ -548,7 +672,7 @@
       let playerDead = false;
       let deathTimer = 0;
       let deathExplosionDone = false;
-      let xtr = 200;
+      let credits = 200;
       let currentWave = 1;
       let currentLevel = 1;
       let totalKills = 0;
@@ -561,33 +685,64 @@
       let waveTransition = false;
       let waveTransitionTimer = 0;
       let waveTransitionText = '';
+      let currentSkin = 'standard';
+      let ownedSkins = ['standard'];
+      let wheelSpinning = false;
+      let freeSpinUsed = false;
 
-      let player = {
-        x: 200,
-        y: 550,
-        width: 40,
-        height: 44,
-        shield: false,
-        doubleShot: false,
-        flyingAway: false,
-        flyTimer: 0
-      };
+      const skinEmojis = { standard: '✈️', fighter: '🛩️', rocket: '🚀', ufo: '🛸', cyber: '👾' };
+      const skinPrices = { fighter: 200, rocket: 500, ufo: 1000, cyber: 2000 };
+      const skinBulletColors = { standard: '#FFD700', fighter: '#00BFFF', rocket: '#FF4400', ufo: '#00FF88',
+        cyber: '#FF00FF' };
 
+      let player = { x: 200, y: 550, width: 40, height: 44, shield: false, doubleShot: false, flyingAway: false,
+        flyTimer: 0 };
       let bullets = [];
       let enemies = [];
       let particles = [];
       let spawnTimer = 0;
       let frameCount = 0;
       let targetX = 200;
-
       const enemiesPerWaveBase = 10;
       const bossEveryWaves = 10;
 
-      function getEnemySpeed() {
-        return 1.5 + (currentLevel - 1) * 0.4 + (currentWave - 1) * 0.08 + Math.random() * 1.2;
+      function getEnemySpeed() { return 1.5 + (currentLevel - 1) * 0.4 + (currentWave - 1) * 0.08 + Math.random() *
+          1.2; }
+
+      function loadGameData() {
+        try {
+          const d = JSON.parse(localStorage.getItem('cosmoBlaster'));
+          if (d) {
+            credits = d.credits || 200;
+            ownedSkins = d.ownedSkins || ['standard'];
+            currentSkin = d.currentSkin || 'standard';
+            freeSpinUsed = d.freeSpinUsed || false;
+            if (!ownedSkins.includes(currentSkin)) currentSkin = 'standard';
+          }
+        } catch (e) {}
       }
 
-            function resizeCanvas() {
+      function saveGameData() {
+        localStorage.setItem('cosmoBlaster', JSON.stringify({
+          credits,
+          ownedSkins,
+          currentSkin,
+          freeSpinUsed,
+          lastSpinDate: new Date().toDateString()
+        }));
+      }
+
+      function checkNewDay() {
+        const last = localStorage.getItem('cosmoBlaster_lastDate');
+        const today = new Date().toDateString();
+        if (last !== today) {
+          freeSpinUsed = false;
+          localStorage.setItem('cosmoBlaster_lastDate', today);
+          saveGameData();
+        }
+      }
+
+      function resizeCanvas() {
         const container = document.getElementById('gameContainer');
         const rect = container.getBoundingClientRect();
         W = rect.width;
@@ -616,106 +771,63 @@
 
       function shootBullet() {
         if (gameState !== 'playing' || !gameActive || playerDead || player.flyingAway) return;
-        bullets.push({ x: player.x - 3, y: player.y - 22, width: 5, height: 16, speed: -10 });
+        bullets.push({ x: player.x - 3, y: player.y - 22, width: 5, height: 16, speed: -10, color: skinBulletColors[
+            currentSkin] });
         if (player.doubleShot) {
-          bullets.push({ x: player.x + 12, y: player.y - 14, width: 5, height: 16, speed: -10 });
-          bullets.push({ x: player.x - 18, y: player.y - 14, width: 5, height: 16, speed: -10 });
+          bullets.push({ x: player.x + 12, y: player.y - 14, width: 5, height: 16, speed: -10,
+          color: skinBulletColors[currentSkin] });
+          bullets.push({ x: player.x - 18, y: player.y - 14, width: 5, height: 16, speed: -10,
+            color: skinBulletColors[currentSkin] });
         }
         sfxShoot();
       }
 
       setInterval(() => { if (gameState === 'playing') shootBullet(); }, 260);
 
-      function startWave() {
-        waveSpawning = true;
+      function startWave() { waveSpawning = true;
         enemiesSpawned = 0;
         enemiesInWave = enemiesPerWaveBase + (currentWave - 1) * 3;
         bossActive = false;
         bossObj = null;
         spawnTimer = 20;
-        updateHUD();
-      }
+        updateHUD(); }
 
       function spawnEnemy() {
         if (!waveSpawning || bossActive) return;
-        let typeRand = Math.random();
-        let enemyType, color, radius, points, emoji;
-        if (typeRand < 0.45) {
-          enemyType = 'meteor';
+        let typeRand = Math.random(),
+          enemyType, color, radius, points, emoji;
+        if (typeRand < 0.45) { enemyType = 'meteor';
           color = '#E67E22';
           radius = 15;
           points = 10;
-          emoji = '🪨';
-        } else if (typeRand < 0.8) {
-          enemyType = 'satellite';
+          emoji = '🪨'; } else if (typeRand < 0.8) { enemyType = 'satellite';
           color = '#3498DB';
           radius = 13;
           points = 15;
-          emoji = '🛰️';
-        } else {
-          enemyType = 'alien';
+          emoji = '🛰️'; } else { enemyType = 'alien';
           color = '#2ECC71';
           radius = 14;
           points = 25;
-          emoji = '👾';
-        }
-        enemies.push({
-          x: Math.random() * (W - 50) + 25,
-          y: -40,
-          radius: radius,
-          type: enemyType,
-          color: color,
-          emoji: emoji,
-          speedY: getEnemySpeed(),
-          wobbleAmp: Math.random() * 1.5 + 0.5,
-          wobbleSpeed: Math.random() * 0.04 + 0.02,
-          points: points,
-          isBoss: false,
-          bossHP: 0
-        });
+          emoji = '👾'; }
+        enemies.push({ x: Math.random() * (W - 50) + 25, y: -40, radius, type: enemyType, color, emoji,
+          speedY: getEnemySpeed(), wobbleAmp: Math.random() * 1.5 + 0.5, wobbleSpeed: Math.random() * 0.04 + 0.02,
+          points, isBoss: false, bossHP: 0 });
         enemiesSpawned++;
-        if (enemiesSpawned >= enemiesInWave) {
-          waveSpawning = false;
-          if (currentWave % bossEveryWaves === 0) spawnBoss();
-        }
+        if (enemiesSpawned >= enemiesInWave) { waveSpawning = false; if (currentWave % bossEveryWaves === 0)
+            spawnBoss(); }
       }
 
-      function spawnBoss() {
-        bossActive = true;
-        bossObj = {
-          x: W / 2,
-          y: -70,
-          radius: 42,
-          type: 'boss',
-          color: '#E74C3C',
-          emoji: '👹',
-          speedY: 1.0,
-          wobbleAmp: 3,
-          wobbleSpeed: 0.03,
-          points: 150,
-          isBoss: true,
-          bossHP: 20 + currentLevel * 8,
-          maxHP: 20 + currentLevel * 8
-        };
-        enemies.push(bossObj);
-      }
+      function spawnBoss() { bossActive = true;
+        bossObj = { x: W / 2, y: -70, radius: 42, type: 'boss', color: '#E74C3C', emoji: '👹', speedY: 1.0,
+          wobbleAmp: 3, wobbleSpeed: 0.03, points: 150, isBoss: true, bossHP: 20 + currentLevel * 8,
+          maxHP: 20 + currentLevel * 8 };
+        enemies.push(bossObj); }
 
-      function createExplosion(x, y, color, count = 14) {
-        for (let i = 0; i < count; i++) {
-          particles.push({
-            x,
-            y,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
-            life: 0.7 + Math.random() * 0.7,
-            color,
-            size: 2 + Math.random() * 5
-          });
-        }
-      }
+      function createExplosion(x, y, color, count = 14) { for (let i = 0; i < count; i++) particles.push({ x, y,
+          vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, life: 0.7 + Math.random() * 0.7, color,
+          size: 2 + Math.random() * 5 }); }
 
-      function killPlayer() {
-        if (playerDead) return;
+      function killPlayer() { if (playerDead) return;
         initAudio();
         playerDead = true;
         gameActive = false;
@@ -725,25 +837,16 @@
         createExplosion(player.x, player.y, '#FFD700', 25);
         createExplosion(player.x, player.y, '#FF4400', 20);
         createExplosion(player.x, player.y, '#FFFFFF', 10);
-      }
+        saveGameData(); }
 
       function checkCollisions() {
         if (!gameActive || playerDead) return;
-
-        for (let i = bullets.length - 1; i >= 0; i--) {
-          const b = bullets[i];
-          for (let j = enemies.length - 1; j >= 0; j--) {
-            const e = enemies[j];
-            const dx = b.x - e.x,
-              dy = b.y - e.y;
-            if (Math.sqrt(dx * dx + dy * dy) < e.radius + 6) {
-              bullets.splice(i, 1);
-              if (e.isBoss) {
-                e.bossHP--;
+        for (let i = bullets.length - 1; i >= 0; i--) { const b = bullets[i]; for (let j = enemies.length - 1; j >=
+            0; j--) { const e = enemies[j]; const dx = b.x - e.x,
+              dy = b.y - e.y; if (Math.sqrt(dx * dx + dy * dy) < e.radius + 6) { bullets.splice(i, 1); if (e
+                .isBoss) { e.bossHP--;
                 sfxBossHit();
-                createExplosion(b.x, b.y, '#FFD700', 5);
-                if (e.bossHP <= 0) {
-                  sfxBossDeath();
+                createExplosion(b.x, b.y, '#FFD700', 5); if (e.bossHP <= 0) { sfxBossDeath();
                   createExplosion(e.x, e.y, '#FF1744', 20);
                   createExplosion(e.x - 20, e.y, '#FF9100', 15);
                   createExplosion(e.x + 20, e.y, '#FFD600', 15);
@@ -751,26 +854,15 @@
                   bossActive = false;
                   bossObj = null;
                   totalKills++;
-                  xtr += 50;
+                  credits += 50;
                   updateHUD();
-                  triggerLevelComplete();
-                }
-              } else {
-                sfxHit();
+                  triggerLevelComplete(); } } else { sfxHit();
                 createExplosion(e.x, e.y, e.color, 8);
                 enemies.splice(j, 1);
-                totalKills++;
-                if (Math.random() < 0.3) { xtr += 1;
-                  updateHUD(); }
-              }
-              updateHUD();
-              break;
-            }
-          }
-        }
-
-        if (!waveSpawning && !bossActive && enemies.length === 0 && gameActive && !playerDead && !player
-          .flyingAway) {
+                totalKills++; if (Math.random() < 0.3) { credits += 1;
+                  updateHUD(); } }
+              updateHUD(); break; } } }
+        if (!waveSpawning && !bossActive && enemies.length === 0 && gameActive && !playerDead && !player.flyingAway) {
           sfxWaveComplete();
           currentWave++;
           updateHUD();
@@ -778,66 +870,53 @@
           waveTransitionTimer = 0;
           waveTransitionText = t('wavePhrases')[(currentWave - 2) % 10];
           startWave();
-        }
-
-        for (let i = enemies.length - 1; i >= 0; i--) {
-          const e = enemies[i];
-          const dx = player.x - e.x,
-            dy = player.y - e.y;
-          if (Math.sqrt(dx * dx + dy * dy) < e.radius + 18) {
-            if (player.shield) {
+          saveGameData(); }
+        for (let i = enemies.length - 1; i >= 0; i--) { const e = enemies[i]; const dx = player.x - e.x,
+            dy = player.y - e.y; if (Math.sqrt(dx * dx + dy * dy) < e.radius + 18) { if (player.shield) {
               player.shield = false;
-              createExplosion(e.x, e.y, '#00FFFF', 12);
-              if (!e.isBoss) enemies.splice(i, 1);
-              continue;
-            }
-            if (playerLives > 1) {
-              playerLives--;
-              createExplosion(e.x, e.y, '#FF0000', 10);
-              if (!e.isBoss) enemies.splice(i, 1);
-              continue;
-            }
-            killPlayer();
-            break;
-          }
-        }
+              createExplosion(e.x, e.y, '#00FFFF', 12); if (!e.isBoss) enemies.splice(i, 1); continue; } if (
+              playerLives > 1) { playerLives--;
+              createExplosion(e.x, e.y, '#FF0000', 10); if (!e.isBoss) enemies.splice(i, 1); continue; }
+            killPlayer(); break; } }
       }
 
-      function triggerLevelComplete() {
-        gameActive = false;
+      function triggerLevelComplete() { gameActive = false;
         player.flyingAway = true;
         player.flyTimer = 0;
         waveTransition = false;
-      }
+        saveGameData(); }
 
-      function updateHUD() {
-        starCounterSpan.textContent = xtr;
+      function updateHUD() { creditsCounterSpan.textContent = credits;
         waveCounterSpan.textContent = currentWave;
-        killsCounterSpan.textContent = totalKills;
-        if (menuXtrSpan) menuXtrSpan.textContent = xtr;
+        killsCounterSpan.textContent = totalKills; if (menuCreditsSpan) menuCreditsSpan.textContent = credits; }
+
+      function updateWheelFreeLabel() { const el = document.getElementById('wheelFree'); if (el) el.textContent =
+          freeSpinUsed ? t('wheelFreeUsed') : t('wheelFree'); }
+
+      function updateSkinButtons() {
+        document.querySelectorAll('.skin-buy').forEach(btn => {
+          const skin = btn.dataset.skin;
+          if (ownedSkins.includes(skin)) {
+            if (currentSkin === skin) { btn.textContent = '✅ ' + t('equipped');
+              btn.disabled = true;
+              btn.style.opacity = '0.6'; } else { btn.textContent = '👕 ' + t('equipped').replace('надето',
+                'надеть').replace('Equipped', 'Equip').replace('已装备', '装备');
+              btn.disabled = false;
+              btn.style.opacity = '1'; }
+          } else { btn.textContent = skinPrices[skin] + ' 💰';
+            btn.disabled = false;
+            btn.style.opacity = '1'; }
+        });
       }
 
       function update() {
-        for (let i = particles.length - 1; i >= 0; i--) {
-          particles[i].x += particles[i].vx;
+        for (let i = particles.length - 1; i >= 0; i--) { particles[i].x += particles[i].vx;
           particles[i].y += particles[i].vy;
-          particles[i].life -= 0.025;
-          if (particles[i].life <= 0) particles.splice(i, 1);
-        }
-
+          particles[i].life -= 0.025; if (particles[i].life <= 0) particles.splice(i, 1); }
         if (gameState === 'loading') return;
-
-        if (gameState === 'playing') {
-          if (!playerDead && !player.flyingAway) {
-            const dx = targetX - player.x;
-            player.x += dx * 0.25;
-          }
-
-          if (player.flyingAway) {
-            player.y -= 7;
-            player.flyTimer++;
-            if (player.y < -80) {
-              currentLevel++;
+        if (gameState === 'playing') { if (!playerDead && !player.flyingAway) { const dx = targetX - player.x;
+            player.x += dx * 0.25; } if (player.flyingAway) { player.y -= 7;
+            player.flyTimer++; if (player.y < -80) { currentLevel++;
               currentWave = 1;
               player.flyingAway = false;
               player.y = H - 80;
@@ -850,109 +929,60 @@
               bullets = [];
               enemies = [];
               startWave();
-              updateHUD();
-            }
-            return;
-          }
-
-          if (playerDead) {
-            deathTimer++;
-            if (deathTimer > 90 && !deathExplosionDone) {
+              updateHUD(); } return; } if (playerDead) { deathTimer++; if (deathTimer > 90 && !deathExplosionDone) {
               deathExplosionDone = true;
-              finalStarsSpan.textContent = xtr;
+              finalCreditsSpan.textContent = credits;
               finalWaveSpan.textContent = currentWave;
               finalKillsSpan.textContent = totalKills;
               gameOverScreen.style.display = 'flex';
               hud.style.display = 'none';
-              gameState = 'dead';
-            }
-            return;
-          }
-
-          if (waveSpawning && !bossActive) {
-            spawnTimer--;
-            if (spawnTimer <= 0) {
+              gameState = 'dead'; } return; } if (waveSpawning && !bossActive) { spawnTimer--; if (spawnTimer <= 0) {
               spawnEnemy();
-              spawnTimer = Math.max(8, 30 - currentLevel * 2);
-            }
-          }
-
-          for (let i = enemies.length - 1; i >= 0; i--) {
+              spawnTimer = Math.max(8, 30 - currentLevel * 2); } } for (let i = enemies.length - 1; i >= 0; i--) {
             const e = enemies[i];
-            e.y += e.speedY;
-            if (e.isBoss) {
-              e.x += Math.sin(frameCount * e.wobbleSpeed) * e.wobbleAmp;
-              if (e.y > 100) e.y = 100 + Math.sin(frameCount * 0.025) * 30;
-            } else {
-              e.x += Math.sin(frameCount * e.wobbleSpeed + i) * e.wobbleAmp;
-            }
-            if (e.y > H + 60 && !e.isBoss) enemies.splice(i, 1);
-          }
-
-          for (let i = bullets.length - 1; i >= 0; i--) {
-            bullets[i].y += bullets[i].speed;
-            if (bullets[i].y < -20) bullets.splice(i, 1);
-          }
-
-          checkCollisions();
-        }
+            e.y += e.speedY; if (e.isBoss) { e.x += Math.sin(frameCount * e.wobbleSpeed) * e.wobbleAmp; if (e.y > 100)
+                e.y = 100 + Math.sin(frameCount * 0.025) * 30; } else e.x += Math.sin(frameCount * e.wobbleSpeed +
+              i) * e.wobbleAmp; if (e.y > H + 60 && !e.isBoss) enemies.splice(i, 1); } for (let i = bullets.length -
+            1; i >= 0; i--) { bullets[i].y += bullets[i].speed; if (bullets[i].y < -20) bullets.splice(i, 1); }
+          checkCollisions(); }
         frameCount++;
       }
 
-      function drawStars() {
-        ctx.fillStyle = 'white';
-        for (let i = 0; i < 60; i++) {
-          let sx = (i * 19 + frameCount * 0.15) % W;
-          let sy = (i * 13) % H;
+      function drawStars() { ctx.fillStyle = 'white'; for (let i = 0; i < 60; i++) { let sx = (i * 19 + frameCount *
+            0.15) % W,
+            sy = (i * 13) % H;
           ctx.globalAlpha = 0.4 + Math.sin(i + frameCount * 0.08) * 0.3;
           ctx.beginPath();
           ctx.arc(sx, sy, 0.8 + (i % 3) * 0.4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-      }
+          ctx.fill(); }
+        ctx.globalAlpha = 1; }
 
-      function drawEnemy(e) {
-        ctx.save();
+      function drawEnemy(e) { ctx.save();
         ctx.translate(e.x, e.y);
         ctx.shadowBlur = e.isBoss ? 30 : 12;
         ctx.shadowColor = e.color;
         ctx.font = `${e.radius * 1.6}px Arial`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(e.emoji, 0, 0);
-
-        if (e.isBoss) {
-          ctx.shadowBlur = 0;
+        ctx.fillText(e.emoji, 0, 0); if (e.isBoss) { ctx.shadowBlur = 0;
           ctx.fillStyle = '#333';
           ctx.fillRect(-35, -e.radius - 20, 70, 8);
           ctx.fillStyle = '#00E676';
           ctx.fillRect(-35, -e.radius - 20, 70 * (e.bossHP / e.maxHP), 8);
           ctx.fillStyle = 'white';
           ctx.font = 'bold 8px Arial';
-          ctx.fillText(t('bossLabel') + e.bossHP + '/' + e.maxHP, 0, -e.radius - 28);
-        }
-        ctx.restore();
-      }
+          ctx.fillText(t('bossLabel') + e.bossHP + '/' + e.maxHP, 0, -e.radius - 28); }
+        ctx.restore(); }
 
-      function draw() {
-        ctx.clearRect(0, 0, W, H);
-        drawStars();
-        if (gameState === 'loading') return;
-
+      function draw() { ctx.clearRect(0, 0, W, H);
+        drawStars(); if (gameState === 'loading') return;
         enemies.forEach(e => drawEnemy(e));
-
-        ctx.fillStyle = '#FFD700';
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = '#FFA000';
-        bullets.forEach(b => {
+        bullets.forEach(b => { ctx.fillStyle = b.color || skinBulletColors[currentSkin];
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = b.color || skinBulletColors[currentSkin];
           ctx.fillRect(b.x - 2, b.y - 7, 4, 14);
           ctx.fillStyle = '#FFF';
-          ctx.fillRect(b.x - 1, b.y - 5, 2, 8);
-          ctx.fillStyle = '#FFD700';
-        });
-
-        if (!playerDead && (!player.flyingAway || player.flyTimer < 60)) {
+          ctx.fillRect(b.x - 1, b.y - 5, 2, 8); }); if (!playerDead && (!player.flyingAway || player.flyTimer < 60)) {
           ctx.save();
           ctx.translate(player.x, player.y);
           ctx.shadowBlur = 18;
@@ -960,44 +990,30 @@
           ctx.font = '38px Arial';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('✈️', 0, 0);
-          if (player.shield) {
-            ctx.strokeStyle = '#00FFFF';
+          ctx.fillText(skinEmojis[currentSkin], 0, 0); if (player.shield) { ctx.strokeStyle = '#00FFFF';
             ctx.lineWidth = 3;
             ctx.shadowBlur = 25;
             ctx.shadowColor = '#00FFFF';
             ctx.beginPath();
             ctx.arc(0, 0, 28, 0, Math.PI * 2);
-            ctx.stroke();
-          }
-          ctx.restore();
-        }
-
-        particles.forEach(p => {
-          ctx.globalAlpha = p.life;
+            ctx.stroke(); }
+          ctx.restore(); }
+        particles.forEach(p => { ctx.globalAlpha = p.life;
           ctx.fillStyle = p.color;
           ctx.shadowBlur = 6;
           ctx.shadowColor = p.color;
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        });
+          ctx.fill(); });
         ctx.globalAlpha = 1;
-        ctx.shadowBlur = 0;
-
-        if (gameState === 'playing' && playerLives > 1 && !playerDead) {
-          ctx.fillStyle = 'white';
+        ctx.shadowBlur = 0; if (gameState === 'playing' && playerLives > 1 && !playerDead) { ctx.fillStyle = 'white';
           ctx.font = 'bold 13px Arial';
-          ctx.fillText('❤️ x' + playerLives, 15, H - 15);
-        }
-
-        if (waveTransition && gameState === 'playing') {
+          ctx.fillText('❤️ x' + playerLives, 15, H - 15); } if (waveTransition && gameState === 'playing') {
           waveTransitionTimer++;
           ctx.save();
           ctx.font = 'bold 28px Arial';
-          ctx.textAlign = 'center';
-          const alpha = Math.min(1, waveTransitionTimer / 20) * (1 - Math.max(0, (waveTransitionTimer - 60) /
-            30));
+          ctx.textAlign = 'center'; const alpha = Math.min(1, waveTransitionTimer / 20) * (1 - Math.max(0, (
+            waveTransitionTimer - 60) / 30));
           ctx.globalAlpha = alpha;
           ctx.fillStyle = '#FFD700';
           ctx.shadowBlur = 20;
@@ -1005,48 +1021,28 @@
           ctx.fillText(waveTransitionText, W / 2, H / 2 - 30);
           ctx.font = '18px Arial';
           ctx.fillText(t('waveLabel') + currentWave, W / 2, H / 2 + 15);
-          ctx.restore();
-          if (waveTransitionTimer > 90) waveTransition = false;
-        }
+          ctx.restore(); if (waveTransitionTimer > 90) waveTransition = false; }
       }
 
-      function gameLoop() {
-        update();
+      function gameLoop() { update();
         draw();
-        requestAnimationFrame(gameLoop);
-      }
+        requestAnimationFrame(gameLoop); }
 
-      function simulateLoading() {
-        let progress = 0;
-        const bar = document.getElementById('loadingBar');
-        const text = document.getElementById('loadingText');
-        const steps = t('loadingText');
-        let step = 0;
-        const interval = setInterval(() => {
-          progress += Math.random() * 25 + 10;
-          if (progress >= 100) {
+      function simulateLoading() { let progress = 0; const bar = document.getElementById('loadingBar'); const text =
+          document.getElementById('loadingText'); const steps = t('loadingText');
+        let step = 0; const interval = setInterval(() => { progress += Math.random() * 25 + 10; if (progress >= 100) {
             progress = 100;
             clearInterval(interval);
             text.textContent = steps[3];
             bar.style.width = '100%';
-            setTimeout(() => {
-              loadingScreen.style.display = 'none';
+            setTimeout(() => { loadingScreen.style.display = 'none';
               menuScreen.style.display = 'flex';
               gameState = 'menu';
-              applyTranslations();
-            }, 400);
-          } else {
-            bar.style.width = progress + '%';
-            if (progress > (step + 1) * 25 && step < 3) {
-              step++;
-              text.textContent = steps[step];
-            }
-          }
-        }, 200);
-      }
+              applyTranslations(); }, 400); } else { bar.style.width = progress + '%'; if (progress > (step + 1) *
+              25 && step < 3) { step++;
+              text.textContent = steps[step]; } } }, 200); }
 
-      function startGame() {
-        initAudio();
+      function startGame() { initAudio();
         gameState = 'playing';
         gameActive = true;
         playerDead = false;
@@ -1067,13 +1063,12 @@
         menuScreen.style.display = 'none';
         gameOverScreen.style.display = 'none';
         shopScreen.style.display = 'none';
+        wheelScreen.style.display = 'none';
         hud.style.display = 'flex';
         updateHUD();
-        startWave();
-      }
+        startWave(); }
 
-      function goToMenu() {
-        gameState = 'menu';
+      function goToMenu() { gameState = 'menu';
         gameActive = false;
         playerDead = false;
         player.flyingAway = false;
@@ -1082,67 +1077,212 @@
         particles = [];
         gameOverScreen.style.display = 'none';
         shopScreen.style.display = 'none';
+        wheelScreen.style.display = 'none';
         hud.style.display = 'none';
         menuScreen.style.display = 'flex';
         updateHUD();
         applyTranslations();
-      }
+        saveGameData(); }
 
-      // Кнопки
       document.getElementById('playBtn').addEventListener('click', startGame);
       document.getElementById('restartBtn').addEventListener('click', startGame);
       document.getElementById('toMenuBtn').addEventListener('click', goToMenu);
-      document.getElementById('menuShopBtn').addEventListener('click', () => {
-        shopScreen.style.display = 'flex';
+      document.getElementById('menuShopBtn').addEventListener('click', () => { shopScreen.style.display = 'flex';
         gameState = 'shop';
-      });
-      document.getElementById('openShopBtn').addEventListener('click', () => {
-        shopScreen.style.display = 'flex';
+        updateSkinButtons(); });
+      document.getElementById('openShopBtn').addEventListener('click', () => { shopScreen.style.display = 'flex';
         gameState = 'shop';
-      });
-      document.getElementById('closeShopBtn').addEventListener('click', () => {
-        shopScreen.style.display = 'none';
-        gameState = gameOverScreen.style.display === 'flex' ? 'dead' : 'playing';
-        if (gameState === 'playing') hud.style.display = 'flex';
-        if (gameState === 'menu') menuScreen.style.display = 'flex';
-      });
+        updateSkinButtons(); });
+      document.getElementById('closeShopBtn').addEventListener('click', () => { shopScreen.style.display = 'none';
+        gameState = gameOverScreen.style.display === 'flex' ? 'dead' : (menuScreen.style.display === 'flex' ?
+          'menu' : 'playing'); if (gameState === 'playing') hud.style.display = 'flex'; if (gameState === 'menu')
+          menuScreen.style.display = 'flex'; });
+      document.getElementById('closeWheelBtn').addEventListener('click', () => { wheelScreen.style.display = 'none';
+        gameState = 'menu';
+        menuScreen.style.display = 'flex';
+        applyTranslations(); });
 
-      document.querySelectorAll('.lang-btn').forEach(btn => {
-        btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
-      });
+      document.getElementById('menuWheelBtn').addEventListener('click', () => { wheelScreen.style.display = 'flex';
+        gameState = 'wheel';
+        updateWheelFreeLabel();
+        updateFakeWinners();
+        drawWheel(); });
+      document.getElementById('spinWheelBtn').addEventListener('click', spinWheel);
 
-      document.getElementById('buyShieldBtn').addEventListener('click', () => {
-        if (xtr >= 50) { xtr -= 50;
+      document.querySelectorAll('.lang-btn').forEach(btn => { btn.addEventListener('click', () => setLanguage(btn
+          .dataset.lang)); });
+
+      document.getElementById('tabItems').addEventListener('click', () => { document.getElementById('shopItems')
+          .style.display = 'block';
+        document.getElementById('shopSkins').style.display = 'none';
+        document.getElementById('tabItems').classList.add('active');
+        document.getElementById('tabSkins').classList.remove('active'); });
+      document.getElementById('tabSkins').addEventListener('click', () => { document.getElementById('shopItems')
+          .style.display = 'none';
+        document.getElementById('shopSkins').style.display = 'block';
+        document.getElementById('tabSkins').classList.add('active');
+        document.getElementById('tabItems').classList.remove('active');
+        updateSkinButtons(); });
+
+      document.querySelectorAll('.skin-buy').forEach(btn => { btn.addEventListener('click', () => { const skin =
+            btn.dataset.skin; if (ownedSkins.includes(skin)) { currentSkin = skin;
+            alert(t('alertSkinEquipped'));
+            updateSkinButtons();
+            saveGameData(); } else { const price = skinPrices[skin]; if (credits >= price) { credits -= price;
+              ownedSkins.push(skin);
+              currentSkin = skin;
+              updateHUD();
+              updateSkinButtons();
+              saveGameData();
+              alert(t('alertSkinBought')); } else alert(t('alertNoCredits')); } }); });
+
+      document.getElementById('buyShieldBtn').addEventListener('click', () => { if (credits >= 50) { credits -= 50;
           player.shield = true;
           updateHUD();
-          alert(t('alertShield')); } else alert(t('alertNoXTR'));
-      });
-      document.getElementById('buyDoubleShotBtn').addEventListener('click', () => {
-        if (xtr >= 100) { xtr -= 100;
+          saveGameData();
+          alert(t('alertShield')); } else alert(t('alertNoCredits')); });
+      document.getElementById('buyDoubleShotBtn').addEventListener('click', () => { if (credits >= 100) { credits -=
+          100;
           player.doubleShot = true;
           updateHUD();
-          alert(t('alertDouble')); } else alert(t('alertNoXTR'));
-      });
-      document.getElementById('buyExtraLifeBtn').addEventListener('click', () => {
-        if (xtr >= 75) { xtr -= 75;
+          saveGameData();
+          alert(t('alertDouble')); } else alert(t('alertNoCredits')); });
+      document.getElementById('buyExtraLifeBtn').addEventListener('click', () => { if (credits >= 75) { credits -= 75;
           playerLives++;
           updateHUD();
-          alert(t('alertLife')); } else alert(t('alertNoXTR'));
-      });
-      document.getElementById('donateStarsBtn').addEventListener('click', () => {
-        if (window.Telegram && Telegram.WebApp) {
-          Telegram.WebApp.showAlert(t('alertDonate'));
-        } else {
-          alert(t('alertDonate'));
-        }
-        xtr += 500;
+          saveGameData();
+          alert(t('alertLife')); } else alert(t('alertNoCredits')); });
+      document.getElementById('donateBtn').addEventListener('click', () => { alert(t('alertDonate'));
+        credits += 500;
         updateHUD();
-      });
+        saveGameData(); });
 
-      // Старт
+      const wheelCanvas = document.getElementById('wheelCanvas');
+      const wheelCtx = wheelCanvas.getContext('2d');
+      const wheelSegments = [
+        { label: '1000💰', real: false, meme: false },
+        { label: '⭐ЗВЁЗДЫ', real: false, meme: false },
+        { label: '💻НОУТ', real: false, meme: false },
+        { label: '😂МЕМ', real: false, meme: true, memeText: 'Обезьяна украла твои КРЕДИТЫ 🐵' },
+        { label: '50💰', real: true, amount: 50 },
+        { label: '100💰', real: true, amount: 100 },
+        { label: '25💰', real: true, amount: 25 },
+        { label: '🤣МЕМ', real: false, meme: true, memeText: 'Енот-ворюга спёр приз 🦝' },
+      ];
+      const wheelColors = ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6C5CE7', '#FF8A5C', '#45B7D1', '#96CEB4', '#FF9FF3'];
+
+      function drawWheel(rotation = 0) {
+        const cx = 140,
+          cy = 140,
+          r = 130;
+        wheelCtx.clearRect(0, 0, 280, 280);
+        const segAngle = (2 * Math.PI) / wheelSegments.length;
+        for (let i = 0; i < wheelSegments.length; i++) {
+          wheelCtx.beginPath();
+          wheelCtx.moveTo(cx, cy);
+          wheelCtx.arc(cx, cy, r, rotation + i * segAngle, rotation + (i + 1) * segAngle);
+          wheelCtx.closePath();
+          wheelCtx.fillStyle = wheelColors[i];
+          wheelCtx.fill();
+          wheelCtx.strokeStyle = '#fff';
+          wheelCtx.lineWidth = 2;
+          wheelCtx.stroke();
+          wheelCtx.save();
+          wheelCtx.translate(cx, cy);
+          wheelCtx.rotate(rotation + i * segAngle + segAngle / 2);
+          wheelCtx.textAlign = 'center';
+          wheelCtx.fillStyle = '#fff';
+          wheelCtx.font = 'bold 11px Arial';
+          wheelCtx.fillText(wheelSegments[i].label, r * 0.65, 5);
+          wheelCtx.restore();
+        }
+        wheelCtx.beginPath();
+        wheelCtx.arc(cx, cy, 20, 0, 2 * Math.PI);
+        wheelCtx.fillStyle = '#FFD700';
+        wheelCtx.fill();
+        wheelCtx.strokeStyle = '#fff';
+        wheelCtx.lineWidth = 3;
+        wheelCtx.stroke();
+        wheelCtx.beginPath();
+        wheelCtx.moveTo(cx, cy - r - 5);
+        wheelCtx.lineTo(cx - 12, cy - r - 20);
+        wheelCtx.lineTo(cx + 12, cy - r - 20);
+        wheelCtx.closePath();
+        wheelCtx.fillStyle = '#FF0044';
+        wheelCtx.fill();
+      }
+
+      function updateFakeWinners() {
+        const fakeNicks = ['CoolPlayer42', 'StarHunter99', 'CosmoFan_1', 'xX_Dragon_Xx', 'LuckyDuck', 'BlasterPro',
+          'NeonWolf', 'PixelKing', 'TurboAce', 'ShadowX', 'GalaxyMind', 'RocketBoy', 'SkyDiver', 'ZeroChill',
+          'DarkMatter', 'LaserQueen', 'VoidWalker', 'NovaStar'
+        ];
+        const times = [1, 2, 3, 5, 7, 10, 12, 15, 18, 22, 25, 30, 35, 40, 45, 50, 55, 60];
+        const nick = fakeNicks[Math.floor(Math.random() * fakeNicks.length)];
+        const time = times[Math.floor(Math.random() * times.length)];
+        const unit = currentLang === 'ru' ? 'минут' : (currentLang === 'zh' ? '分钟' : 'minutes');
+        document.getElementById('wheelFakeText').textContent =
+          `🎉 ${nick} ${t('wheelFakePrefix')} ${time} ${unit} ${t('wheelFakeSuffix')}! 🎉`;
+        setTimeout(updateFakeWinners, 8000);
+      }
+
+      let wheelRotation = 0;
+
+      function spinWheel() {
+        if (wheelSpinning) return;
+        initAudio();
+        if (freeSpinUsed && credits < 50) { alert(t('alertNoCredits')); return; }
+        if (!freeSpinUsed) { freeSpinUsed = true;
+          updateWheelFreeLabel();
+          saveGameData(); } else { credits -= 50;
+          updateHUD();
+          saveGameData(); }
+        wheelSpinning = true;
+        document.getElementById('spinWheelBtn').disabled = true;
+        const spins = 5 + Math.floor(Math.random() * 5);
+        const targetAngle = Math.random() * 2 * Math.PI;
+        const totalRotation = wheelRotation + spins * 2 * Math.PI + targetAngle;
+        const duration = 3000;
+        const startTime = Date.now();
+        const startRotation = wheelRotation;
+        let tickCount = 0;
+
+        function animate() {
+          const elapsed = Date.now() - startTime;
+          const progress = Math.min(1, elapsed / duration);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          wheelRotation = startRotation + (totalRotation - startRotation) * eased;
+          drawWheel(wheelRotation);
+          const segAngle = (2 * Math.PI) / wheelSegments.length;
+          const normalizedRotation = wheelRotation % (2 * Math.PI);
+          const currentSeg = Math.floor(normalizedRotation / segAngle);
+          if (currentSeg !== tickCount && progress < 0.95) { tickCount = currentSeg;
+            sfxWheelTick(); }
+          if (progress < 1) { requestAnimationFrame(animate); } else {
+            const finalSeg = Math.floor(((wheelRotation % (2 * Math.PI)) + segAngle / 2) / segAngle) %
+              wheelSegments.length;
+            const result = wheelSegments[finalSeg];
+            sfxWheelWin(); if (result.real) { credits += result.amount;
+              updateHUD();
+              saveGameData();
+              alert(t('wheelWinCredits').replace('{n}', result.amount)); } else if (result.meme) { alert(t(
+                'wheelWinMeme').replace('{meme}', result.memeText || '😂')); } else { alert(t('wheelWinMeme')
+                .replace('{meme}', 'Ничего! 😂')); }
+            wheelSpinning = false;
+            document.getElementById('spinWheelBtn').disabled = false;
+            updateWheelFreeLabel(); }
+        }
+        requestAnimationFrame(animate);
+      }
+
+      loadGameData();
+      checkNewDay();
       resizeCanvas();
       simulateLoading();
       gameLoop();
+      updateWheelFreeLabel();
+      updateFakeWinners();
+      drawWheel();
     })();
   </script>
 </body>
