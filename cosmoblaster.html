@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, touch-action: manipulation">
+  <title>✨ Cosmo Blaster XTR | Telegram Mini App</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #0a0f1e;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Segoe UI', 'Arial', sans-serif;
+      touch-action: pan-x pan-y;
+      user-select: none;
+    }
+    .game-container {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      height: 100dvh;
+      max-height: 750px;
+      background: radial-gradient(ellipse at center, #1a1f35 0%, #0a0c18 100%);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.1);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 24px;
+    }
+    .ui-overlay {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .stars-panel, .wave-panel {
+      background: rgba(10, 15, 30, 0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 30px;
+      padding: 8px 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #FFD966;
+      font-weight: bold;
+      font-size: 1.1rem;
+      border: 1px solid rgba(255, 215, 0, 0.3);
+      box-shadow: 0 4px 15px rgba(255,200,0,0.2);
+    }
+    .wave-panel {
+      color: #00BFFF;
+      border-color: rgba(0,191,255,0.3);
+    }
+    .stars-panel span, .wave-panel span {
+      font-size: 1.4rem;
+      filter: drop-shadow(0 0 8px currentColor);
+    }
+    .top-row {
+      display: flex;
+      gap: 10px;
+    }
+    .shop-button {
+      pointer-events: auto;
+      background: #FF2A75;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 15px rgba(255,42,117,0.5);
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      background: rgba(255,42,117,0.9);
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .shop-button:active {
+      transform: scale(0.95);
+      background: #ff1c69;
+    }
+    .game-over-screen, .shop-screen, .wave-complete-screen, .level-transition {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(5, 0, 20, 0.85);
+      backdrop-filter: blur(15px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      color: white;
+      text-align: center;
+      border-radius: 24px;
+      padding: 30px;
+    }
+    .game-over-screen h2 {
+      font-size: 2.8rem;
+      text-shadow: 0 0 20px #ff0000;
+      margin-bottom: 10px;
+    }
+    .wave-complete-screen h2 {
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+      background: linear-gradient(45deg, #FFD700, #FF6B6B, #4ECDC4, #FFD700);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: rainbowShine 2s ease infinite;
+      font-weight: 900;
+      letter-spacing: 2px;
+    }
+    @keyframes rainbowShine {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .level-transition h2 {
+      font-size: 2.4rem;
+      color: #00BFFF;
+      text-shadow: 0 0 30px #00BFFF;
+      margin-bottom: 10px;
+    }
+    .shop-screen h2 {
+      font-size: 2rem;
+      color: #FFD966;
+      margin-bottom: 25px;
+    }
+    .btn {
+      background: linear-gradient(180deg, #FFD966 0%, #FFB800 100%);
+      border: none;
+      color: #1a1a2e;
+      font-weight: bold;
+      padding: 15px 35px;
+      border-radius: 40px;
+      font-size: 1.3rem;
+      margin: 10px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(255,200,0,0.4);
+      transition: 0.2s;
+      letter-spacing: 0.5px;
+      pointer-events: auto;
+    }
+    .btn:active {
+      transform: scale(0.94);
+    }
+    .shop-item {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 15px 25px;
+      margin: 10px 0;
+      width: 80%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: white;
+    }
+    .close-btn {
+      background: transparent;
+      color: white;
+      border: 1px solid white;
+      font-size: 1rem;
+      padding: 10px 25px;
+      border-radius: 30px;
+      margin-top: 20px;
+    }
+    .rating-display {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 8px 15px;
+      border-radius: 20px;
+      color: #FFD966;
+      font-size: 0.9rem;
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+<div class="game-container" id="gameContainer">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="ui-overlay">
+    <div class="top-row">
+      <div class="stars-panel">
+        <span>⭐</span> <span id="starCounter">0</span>
+      </div>
+      <div class="wave-panel">
+        <span>🌊</span> <span id="waveCounter">1</span>
+      </div>
+    </div>
+    <button class="shop-button" id="openShopBtn">🛍️ XTR</button>
+  </div>
+
+  <div class="rating-display" id="ratingDisplay">🏆 Рейтинг: #<span id="ratingValue">1337</span></div>
+
+  <!-- Экран завершения волны -->
+  <div class="wave-complete-screen" id="waveCompleteScreen" style="display: none;">
+    <h2 id="waveCompleteText">NICE SHOT!</h2>
+    <p style="font-size:1.2rem; margin:15px 0;">Волна <span id="completedWaveNum">1</span> пройдена!</p>
+    <button class="btn" id="nextWaveBtn">▶ Следующая волна</button>
+  </div>
+
+  <!-- Экран перехода на уровень (после босса) -->
+  <div class="level-transition" id="levelTransitionScreen" style="display: none;">
+    <h2>🚀 УРОВЕНЬ ПРОЙДЕН!</h2>
+    <p style="font-size:1.4rem; margin:10px 0;">Босс повержен!</p>
+    <p style="color:#FFD966;">+50 XTR бонус</p>
+    <button class="btn" id="nextLevelBtn">🌌 Следующий уровень</button>
+  </div>
+
+  <!-- Магазин -->
+  <div class="shop-screen" id="shopScreen" style="display: none;">
+    <h2>✨ Магазин XTR ✨</h2>
+    <div class="shop-item">
+      <span>🛡️ Щит (1 игра)</span>
+      <button class="btn" style="padding:8px 20px; font-size:1rem;" id="buyShieldBtn">50 XTR</button>
+    </div>
+    <div class="shop-item">
+      <span>⚡ Двойной выстрел</span>
+      <button class="btn" style="padding:8px 20px; font-size:1rem;" id="buyDoubleShotBtn">100 XTR</button>
+    </div>
+    <div class="shop-item">
+      <span>❤️ Доп. жизнь</span>
+      <button class="btn" style="padding:8px 20px; font-size:1rem;" id="buyExtraLifeBtn">75 XTR</button>
+    </div>
+    <div class="shop-item">
+      <span>💎 500 XTR</span>
+      <button class="btn" style="padding:8px 20px; font-size:1rem; background:#FF2A75; color:white;" id="donateStarsBtn">💳 Купить</button>
+    </div>
+    <button class="close-btn" id="closeShopBtn">Закрыть</button>
+  </div>
+
+  <!-- Game Over -->
+  <div class="game-over-screen" id="gameOverScreen" style="display: none;">
+    <h2>💥 ВЗРЫВ!</h2>
+    <p style="font-size:1.4rem; margin:10px 0;">Волна: <span id="finalWave">1</span></p>
+    <p style="font-size:1.2rem;">XTR: <span id="finalStars">0</span> ⭐</p>
+    <button class="btn" id="restartBtn">🚀 Играть снова</button>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // UI элементы
+    const starCounterSpan = document.getElementById('starCounter');
+    const waveCounterSpan = document.getElementById('waveCounter');
+    const gameOverScreen = document.getElementById('gameOverScreen');
+    const finalStarsSpan = document.getElementById('finalStars');
+    const finalWaveSpan = document.getElementById('finalWave');
+    const shopScreen = document.getElementById('shopScreen');
+    const waveCompleteScreen = document.getElementById('waveCompleteScreen');
+    const waveCompleteText = document.getElementById('waveCompleteText');
+    const completedWaveNum = document.getElementById('completedWaveNum');
+    const levelTransitionScreen = document.getElementById('levelTransitionScreen');
+    const ratingValueSpan = document.getElementById('ratingValue');
+
+    let W, H;
+
+    // Состояние
+    let gameActive = true;
+    let gamePaused = false;
+    let score = 0;
+    let xtr = 150; // стартовые звёзды XTR
+    let currentWave = 1;
+    let currentLevel = 1;
+    let enemiesInWave = 0;
+    let enemiesSpawned = 0;
+    let waveActive = false;
+    let bossActive = false;
+    let bossObj = null;
+    let playerLives = 1;
+    let fakeRating = 1337;
+
+    // Игрок
+    let player = {
+      x: 200,
+      y: 550,
+      width: 40,
+      height: 44,
+      speed: 6,
+      shield: false,
+      doubleShot: false,
+      flyingAway: false,
+      flyTimer: 0
+    };
+
+    let bullets = [];
+    let enemies = [];
+    let particles = [];
+    let spawnTimer = 0;
+    let frameCount = 0;
+    let targetX = 200;
+
+    // Волновые настройки
+    const enemiesPerWaveBase = 8;
+    const bossEveryWaves = 10;
+
+    // Надписи после волны
+    const wavePhrases = [
+      "NICE SHOT! 🎯",
+      "PROFESSIONAL! 👑",
+      "GODLIKE! ⚡",
+      "IMPRESSIVE! 🌟",
+      "DEVASTATING! 💥",
+      "UNSTOPPABLE! 🔥",
+      "LEGENDARY! 🏆",
+      "MASSACRE! 💀",
+      "FLAWLESS! ✨",
+      "COSMIC POWER! 🌌"
+    ];
+
+    function resizeCanvas() {
+      const container = document.getElementById('gameContainer');
+      const rect = container.getBoundingClientRect();
+      W = rect.width;
+      H = rect.height;
+      canvas.width = W;
+      canvas.height = H;
+      player.y = H - 80;
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    // Управление
+    function handleMove(e) {
+      e.preventDefault();
+      if (!gameActive || player.flyingAway) return;
+      const rect = canvas.getBoundingClientRect();
+      let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      targetX = (clientX - rect.left) * (W / rect.width);
+      targetX = Math.min(Math.max(targetX, player.width/2), W - player.width/2);
+    }
+
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', handleMove, { passive: false });
+    canvas.addEventListener('touchstart', handleMove, { passive: false });
+
+    function shootBullet() {
+      if (!gameActive || player.flyingAway) return;
+      bullets.push({
+        x: player.x - 4,
+        y: player.y - 20,
+        width: 4,
+        height: 14,
+        speed: -9
+      });
+      if (player.doubleShot) {
+        bullets.push({ x: player.x + 10, y: player.y - 10, width: 4, height: 14, speed: -9 });
+        bullets.push({ x: player.x - 18, y: player.y - 10, width: 4, height: 14, speed: -9 });
+      }
+    }
+
+    setInterval(() => {
+      if (gameActive && !player.flyingAway) shootBullet();
+    }, 280);
+
+    function startWave() {
+      waveActive = true;
+      enemiesSpawned = 0;
+      enemiesInWave = enemiesPerWaveBase + (currentWave - 1) * 2;
+      bossActive = false;
+      bossObj = null;
+      spawnTimer = 20;
+      updateUI();
+    }
+
+    function spawnEnemy() {
+      if (!waveActive || bossActive) return;
+
+      let typeRand = Math.random();
+      let enemyType, color, radius, points;
+
+      if (typeRand < 0.5) {
+        enemyType = 'meteor';
+        color = '#8B5E3C';
+        radius = 14;
+        points = 10;
+      } else if (typeRand < 0.8) {
+        enemyType = 'debris';
+        color = '#7F8C8D';
+        radius = 11;
+        points = 5;
+      } else {
+        enemyType = 'drone';
+        color = '#E74C3C';
+        radius = 13;
+        points = 20;
+      }
+
+      enemies.push({
+        x: Math.random() * (W - 40) + 20,
+        y: -30,
+        radius: radius,
+        type: enemyType,
+        color: color,
+        speedY: 2.0 + Math.random() * 2.5 + currentLevel * 0.3,
+        wobble: Math.random() * 2 - 1,
+        points: points,
+        isBoss: false,
+        bossHP: 0
+      });
+
+      enemiesSpawned++;
+
+      if (enemiesSpawned >= enemiesInWave) {
+        if (currentWave % bossEveryWaves === 0) {
+          spawnBoss();
+        } else {
+          waveActive = false; // ждём уничтожения всех врагов
+        }
+      }
+    }
+
+    function spawnBoss() {
+      bossActive = true;
+      bossObj = {
+        x: W / 2,
+        y: -60,
+        radius: 38,
+        type: 'boss',
+        color: '#FF1744',
+        speedY: 1.2,
+        wobble: 0,
+        points: 100,
+        isBoss: true,
+        bossHP: 15 + currentLevel * 5,
+        maxHP: 15 + currentLevel * 5,
+        phase: 0
+      };
+      enemies.push(bossObj);
+    }
+
+    function createExplosion(x, y, color) {
+      for (let i = 0; i < 14; i++) {
+        particles.push({
+          x: x, y: y,
+          vx: (Math.random() - 0.5) * 7,
+          vy: (Math.random() - 0.5) * 7,
+          life: 0.8 + Math.random() * 0.6,
+          color: color,
+          size: 2 + Math.random() * 5
+        });
+      }
+    }
+
+    function updateFakeRating() {
+      fakeRating = Math.max(1, fakeRating + Math.floor(Math.random() * 21) - 10);
+      ratingValueSpan.textContent = fakeRating;
+    }
+
+    function checkCollisions() {
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        const b = bullets[i];
+        for (let j = enemies.length - 1; j >= 0; j--) {
+          const e = enemies[j];
+          const dx = b.x - e.x;
+          const dy = b.y - e.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < e.radius + 6) {
+            bullets.splice(i, 1);
+
+            if (e.isBoss) {
+              e.bossHP--;
+              createExplosion(b.x, b.y, '#FFD700');
+              if (e.bossHP <= 0) {
+                createExplosion(e.x, e.y, '#FF1744');
+                createExplosion(e.x - 20, e.y, '#FF9100');
+                createExplosion(e.x + 20, e.y, '#FFD600');
+                enemies.splice(j, 1);
+                bossActive = false;
+                bossObj = null;
+                xtr += 50;
+                updateUI();
+                triggerLevelComplete();
+              }
+            } else {
+              createExplosion(e.x, e.y, e.color);
+              enemies.splice(j, 1);
+              score += e.points;
+              if (Math.random() < 0.25) {
+                xtr += 1;
+                updateUI();
+              }
+            }
+            break;
+          }
+        }
+      }
+
+      // Проверка завершения волны (все не-боссы убиты, волна не активна)
+      if (!waveActive && !bossActive && enemies.length === 0 && gameActive && !player.flyingAway) {
+        triggerWaveComplete();
+      }
+
+      // Столкновение игрока с врагами
+      if (!gameActive || player.flyingAway) return;
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        const dx = player.x - e.x;
+        const dy = player.y - e.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < e.radius + 18) {
+          if (player.shield) {
+            player.shield = false;
+            createExplosion(e.x, e.y, '#00FFFF');
+            if (!e.isBoss) enemies.splice(i, 1);
+            continue;
+          }
+          if (playerLives > 1) {
+            playerLives--;
+            createExplosion(e.x, e.y, '#FF0000');
+            if (!e.isBoss) enemies.splice(i, 1);
+            continue;
+          }
+          // Game Over
+          gameActive = false;
+          createExplosion(player.x, player.y, '#FFD966');
+          finalStarsSpan.textContent = xtr;
+          finalWaveSpan.textContent = currentWave;
+          gameOverScreen.style.display = 'flex';
+          updateFakeRating();
+          break;
+        }
+      }
+    }
+
+    function triggerWaveComplete() {
+      gameActive = false;
+      const phrase = wavePhrases[(currentWave - 1) % wavePhrases.length];
+      waveCompleteText.textContent = phrase;
+      completedWaveNum.textContent = currentWave;
+      waveCompleteScreen.style.display = 'flex';
+    }
+
+    function triggerLevelComplete() {
+      gameActive = false;
+      player.flyingAway = true;
+      player.flyTimer = 0;
+      levelTransitionScreen.style.display = 'flex';
+    }
+
+    function nextWave() {
+      currentWave++;
+      waveCompleteScreen.style.display = 'none';
+      gameActive = true;
+      player.shield = false;
+      player.doubleShot = false;
+      bullets = [];
+      enemies = [];
+      startWave();
+      updateFakeRating();
+    }
+
+    function nextLevel() {
+      currentLevel++;
+      currentWave = 1;
+      levelTransitionScreen.style.display = 'none';
+      gameActive = true;
+      player.flyingAway = false;
+      player.y = H - 80;
+      player.shield = false;
+      player.doubleShot = false;
+      playerLives = 1;
+      bullets = [];
+      enemies = [];
+      particles = [];
+      startWave();
+      updateFakeRating();
+    }
+
+    function updateUI() {
+      starCounterSpan.textContent = xtr;
+      waveCounterSpan.textContent = currentWave;
+    }
+
+    function update() {
+      if (!gameActive) {
+        for (let i = particles.length - 1; i >= 0; i--) {
+          particles[i].x += particles[i].vx;
+          particles[i].y += particles[i].vy;
+          particles[i].life -= 0.02;
+          if (particles[i].life <= 0) particles.splice(i, 1);
+        }
+        if (player.flyingAway) {
+          player.y -= 6;
+          player.flyTimer++;
+        }
+        return;
+      }
+
+      const dx = targetX - player.x;
+      player.x += dx * 0.2;
+
+      if (waveActive && !bossActive) {
+        spawnTimer--;
+        if (spawnTimer <= 0 && enemiesSpawned < enemiesInWave) {
+          spawnEnemy();
+          spawnTimer = Math.max(15, 35 - currentLevel * 2);
+        }
+        if (enemiesSpawned >= enemiesInWave) {
+          waveActive = false;
+        }
+      }
+
+      // Движение врагов
+      for (let i = enemies.length - 1; i >= 0; i--) {
+        const e = enemies[i];
+        e.y += e.speedY;
+        if (e.isBoss) {
+          e.x += Math.sin(frameCount * 0.04) * 2.5;
+          if (e.y > 120) e.y = 120 + Math.sin(frameCount * 0.03) * 25;
+        } else {
+          e.x += Math.sin(frameCount * 0.05 + i) * 0.5;
+        }
+        if (e.y > H + 60 && !e.isBoss) {
+          enemies.splice(i, 1);
+        }
+      }
+
+      for (let i = bullets.length - 1; i >= 0; i--) {
+        bullets[i].y += bullets[i].speed;
+        if (bullets[i].y < -20) bullets.splice(i, 1);
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        particles[i].x += particles[i].vx;
+        particles[i].y += particles[i].vy;
+        particles[i].life -= 0.02;
+        if (particles[i].life <= 0) particles.splice(i, 1);
+      }
+
+      checkCollisions();
+      frameCount++;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      // Звёзды фона
+      ctx.fillStyle = 'white';
+      for (let i = 0; i < 50; i++) {
+        let sx = (i * 23 + frameCount * 0.2) % W;
+        let sy = (i * 17) % H;
+        ctx.globalAlpha = 0.5 + Math.sin(i + frameCount * 0.1) * 0.4;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Враги
+      enemies.forEach(e => {
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        if (e.isBoss) {
+          ctx.shadowBlur = 25;
+          ctx.shadowColor = '#FF0000';
+          ctx.fillStyle = '#B71C1C';
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#FF5722';
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius * 0.7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'white';
+          ctx.beginPath();
+          ctx.arc(-8, -8, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(8, -8, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'black';
+          ctx.beginPath();
+          ctx.arc(-8, -8, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(8, -8, 3, 0, Math.PI * 2);
+          ctx.fill();
+          // HP bar
+          ctx.fillStyle = '#333';
+          ctx.fillRect(-25, -e.radius - 15, 50, 6);
+          ctx.fillStyle = '#00E676';
+          const hpPercent = e.bossHP / e.maxHP;
+          ctx.fillRect(-25, -e.radius - 15, 50 * hpPercent, 6);
+        } else if (e.type === 'meteor') {
+          ctx.fillStyle = '#6B4226';
+          ctx.shadowColor = '#FF8C00';
+          ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (e.type === 'debris') {
+          ctx.fillStyle = '#95A5A6';
+          ctx.shadowBlur = 8;
+          ctx.fillRect(-e.radius / 1.5, -e.radius / 2, e.radius * 1.3, e.radius);
+        } else if (e.type === 'drone') {
+          ctx.fillStyle = '#C0392B';
+          ctx.shadowBlur = 15;
+          ctx.shadowColor = '#FF0000';
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      });
+
+      // Пули
+      ctx.fillStyle = '#FFD966';
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = '#FFAA00';
+      bullets.forEach(b => {
+        ctx.fillRect(b.x - 2, b.y - 6, 4, 12);
+      });
+
+      // Игрок
+      if (!player.flyingAway || player.flyTimer < 80) {
+        ctx.save();
+        ctx.translate(player.x, player.y);
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00BFFF';
+        ctx.fillStyle = '#3498DB';
+        ctx.beginPath();
+        ctx.moveTo(0, -22);
+        ctx.lineTo(-16, 16);
+        ctx.lineTo(-6, 10);
+        ctx.lineTo(0, 18);
+        ctx.lineTo(6, 10);
+        ctx.lineTo(16, 16);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#1F618D';
+        ctx.beginPath();
+        ctx.arc(0, -2, 8, 0, Math.PI * 2);
+        ctx.fill();
+        if (player.shield) {
+          ctx.strokeStyle = '#00FFFF';
+          ctx.lineWidth = 3;
+          ctx.shadowBlur = 20;
+          ctx.beginPath();
+          ctx.arc(0, 0, 26, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // Частицы
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+
+      // Отрисовка HP игрока
+      if (playerLives > 1) {
+        ctx.fillStyle = '#FF5252';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('❤️ x' + playerLives, 20, H - 20);
+      }
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    function restartGame() {
+      gameActive = true;
+      player.x = W / 2;
+      targetX = W / 2;
+      player.y = H - 80;
+      player.shield = false;
+      player.doubleShot = false;
+      player.flyingAway = false;
+      playerLives = 1;
+      currentWave = 1;
+      currentLevel = 1;
+      bullets = [];
+      enemies = [];
+      particles = [];
+      spawnTimer = 20;
+      gameOverScreen.style.display = 'none';
+      waveCompleteScreen.style.display = 'none';
+      levelTransitionScreen.style.display = 'none';
+      updateUI();
+      startWave();
+    }
+
+    document.getElementById('restartBtn').addEventListener('click', restartGame);
+    document.getElementById('nextWaveBtn').addEventListener('click', nextWave);
+    document.getElementById('nextLevelBtn').addEventListener('click', nextLevel);
+
+    // Магазин
+    document.getElementById('openShopBtn').addEventListener('click', () => {
+      shopScreen.style.display = 'flex';
+    });
+    document.getElementById('closeShopBtn').addEventListener('click', () => {
+      shopScreen.style.display = 'none';
+    });
+
+    document.getElementById('buyShieldBtn').addEventListener('click', () => {
+      if (xtr >= 50) {
+        xtr -= 50;
+        player.shield = true;
+        updateUI();
+        alert('🛡️ Щит активирован!');
+      } else alert('Недостаточно XTR!');
+    });
+
+    document.getElementById('buyDoubleShotBtn').addEventListener('click', () => {
+      if (xtr >= 100) {
+        xtr -= 100;
+        player.doubleShot = true;
+        updateUI();
+        alert('⚡ Двойной выстрел активен!');
+      } else alert('Недостаточно XTR!');
+    });
+
+    document.getElementById('buyExtraLifeBtn').addEventListener('click', () => {
+      if (xtr >= 75) {
+        xtr -= 75;
+        playerLives++;
+        updateUI();
+        alert('❤️ +1 жизнь!');
+      } else alert('Недостаточно XTR!');
+    });
+
+    document.getElementById('donateStarsBtn').addEventListener('click', () => {
+      // Имитация реального платежа Telegram Stars (XTR)
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.showAlert('💎 Открываем платёж XTR...');
+      } else {
+        alert('💎 Донат 500 XTR (демо). В Mini App: Telegram.Payments.');
+      }
+      xtr += 500;
+      updateUI();
+    });
+
+    // Старт
+    restartGame();
+    gameLoop();
+    updateUI();
+    updateFakeRating();
+  })();
+</script>
+</body>
+</html>
+```
